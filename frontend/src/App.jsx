@@ -120,7 +120,7 @@ function Footer() {
         </div>
         <div style={{ marginTop: 40, paddingTop: 20, borderTop: '1px solid var(--iron)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
           <span className="mono" style={{ fontSize: 11, color: 'var(--ash)' }}>
-  © 2026 ACRS · Built by{' '}
+  © 2026 ACRS · {' '}
   
     <a href="https://www.linkedin.com/in/ritwikk03/"
     target="_blank"
