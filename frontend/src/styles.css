@@ -1,0 +1,244 @@
+/* ============================================================
+   ACRS — Monochrome Luxury · Liquid Glass
+   Near-black → graphite → silver. Red only as a faint signal.
+   Display/body: Hanken Grotesk (humanist sans, Darkmode-class).
+   ============================================================ */
+
+:root {
+  /* monochrome surface ramp */
+  --void:    #060607;   /* page base */
+  --pitch:   #0B0B0D;   /* deep section */
+  --coal:    #101013;   /* raised */
+  --graphite:#17171B;   /* panel solid */
+  --slate:   #202026;   /* hairline-strong / wells */
+  --iron:    #2C2C33;   /* borders */
+
+  /* glass tints (used with backdrop-filter) */
+  --glass:      rgba(22, 22, 26, 0.55);
+  --glass-2:    rgba(30, 30, 35, 0.45);
+  --glass-edge: rgba(255, 255, 255, 0.08);
+  --glass-hi:   rgba(255, 255, 255, 0.14);
+
+  /* type ramp — silver to bone */
+  --bone:   #F2F1ED;   /* primary */
+  --silver: #B9B7B1;   /* secondary */
+  --pewter: #86847F;   /* tertiary */
+  --ash:    #5A595E;   /* quaternary */
+  --ghost:  #3A3A40;   /* faint */
+
+  /* the single accent — kept faint, mostly for hover/live state */
+  --red:      #E5484D;
+  --red-soft: #C23B3F;
+  --red-glow: rgba(229, 72, 77, 0.5);
+
+  /* functional (data only, desaturated to fit monochrome luxury) */
+  --pos: #8FA99B;   /* muted sage */
+  --mid: #B7A98C;   /* muted sand */
+  --neg: #C98A8C;   /* muted rose */
+
+  --display: "Schibsted Grotesk", system-ui, sans-serif;
+  --body:    "Hanken Grotesk", system-ui, sans-serif;
+  --mono:    "JetBrains Mono", ui-monospace, monospace;
+
+  --maxw: 1140px;
+  --r: 14px;       /* generous, Apple-soft radius */
+  --r-sm: 10px;
+  --r-lg: 22px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; scroll-behavior: smooth; }
+
+body {
+  background: var(--void);
+  color: var(--bone);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.62;
+  letter-spacing: -0.006em;
+  overflow-x: hidden;
+}
+
+/* ambient monochrome light — a soft top glow, no color */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(1100px 520px at 50% -200px, rgba(255,255,255,0.05), transparent 70%),
+    radial-gradient(800px 600px at 85% 10%, rgba(229,72,77,0.04), transparent 65%);
+}
+
+#root { position: relative; z-index: 1; }
+
+::selection { background: rgba(229,72,77,0.26); color: #fff; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--iron); border-radius: 6px; border: 2px solid var(--void); }
+::-webkit-scrollbar-thumb:hover { background: #3a3a42; }
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, textarea { font-family: inherit; }
+
+/* ---------- type primitives ---------- */
+.display {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  color: var(--bone);
+}
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--pewter);
+}
+.mono { font-family: var(--mono); }
+.num { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+/* ---------- layout ---------- */
+.shell { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+
+/* ---------- LIQUID GLASS ---------- */
+/* The core Apple-style material: translucent, blurred, with a bright top edge
+   and a soft inner highlight. Layered shadows give it float. */
+.glass {
+  position: relative;
+  background: var(--glass);
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--r);
+  box-shadow:
+    0 1px 0 0 var(--glass-hi) inset,
+    0 0 0 1px rgba(0,0,0,0.4),
+    0 24px 60px -24px rgba(0,0,0,0.7);
+}
+/* glossy top-edge highlight */
+.glass::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0) 40%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events: none;
+}
+.glass-soft {
+  background: var(--glass-2);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--r-sm);
+}
+
+/* solid panel for dense data areas */
+.panel {
+  background: var(--graphite);
+  border: 1px solid var(--iron);
+  border-radius: var(--r);
+}
+.panel-inset {
+  background: var(--coal);
+  border: 1px solid var(--slate);
+  border-radius: var(--r-sm);
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 12px 22px;
+  font-size: 14px; font-weight: 500; letter-spacing: -0.01em;
+  border-radius: 999px;
+  transition: all .28s cubic-bezier(.2,.8,.2,1);
+  white-space: nowrap;
+}
+/* primary = bright bone pill, red only on hover glow */
+.btn-primary {
+  background: var(--bone);
+  color: #0A0A0B;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 10px 30px -10px rgba(0,0,0,0.6);
+}
+.btn-primary:hover {
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 0 0 1px var(--red-glow), 0 14px 36px -10px var(--red-glow);
+  transform: translateY(-1px);
+}
+.btn-primary:disabled { background: var(--slate); color: var(--ash); box-shadow: none; cursor: default; transform: none; }
+/* ghost = glass pill */
+.btn-ghost {
+  background: var(--glass-2);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--silver);
+  border: 1px solid var(--glass-edge);
+}
+.btn-ghost:hover { color: var(--bone); border-color: rgba(229,72,77,0.4); }
+
+/* ---------- tag ---------- */
+.tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono);
+  font-size: 10.5px; font-weight: 500;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--iron); color: var(--silver);
+  background: rgba(255,255,255,0.02);
+}
+
+:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+
+/* ---------- motion ---------- */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes floatIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes streamIn {
+  0% { opacity: 0; transform: translateY(16px) scale(0.98); filter: blur(4px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@keyframes pulse {
+  0%,100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.25); }
+}
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes scanLine {
+  0%   { top: -2px;  opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { top: 100%;  opacity: 0; }
+}
+@keyframes scanGlow {
+  0%   { top: -64px; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%;  opacity: 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--coal) 25%, var(--slate) 50%, var(--coal) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto; }
+}
+
+/* ---------- code ---------- */
+.code {
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.72;
+  background: var(--coal); border: 1px solid var(--slate);
+  border-radius: var(--r-sm); overflow: auto;
+}
+.code-line { display: flex; }
+.code-gutter { width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: var(--ghost); user-select: none; font-size: 11px; }
+.code-flagged { background: rgba(229,72,77,0.06); border-left: 2px solid var(--red); }
+.code-flagged .code-gutter { color: var(--red); }
+
+/* ---------- responsive ---------- */
+@media (max-width: 760px) {
+  body { font-size: 14px; }
+  .shell { padding: 0 18px; }
+}
+
+.recharts-default-tooltip { background: var(--graphite) !important; border: 1px solid var(--iron) !important; border-radius: 10px !important; }
+table { border-collapse: collapse; }
