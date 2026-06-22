@@ -115,11 +115,23 @@ function Footer() {
           </div>
           <div style={{ display: 'flex', gap: 56, flexWrap: 'wrap' }}>
             <FooterCol title="Product" links={[['Analyze', '/analyze'], ['AI Detection', '/ai-detect'], ['Benchmark', '/benchmark']]} />
-            <FooterCol title="Reference" links={[['Docs', '/docs'], ['GitHub', 'https://github.com/RitzwiK/ACRS', true]]} />
+            <FooterCol title="Reference" links={[['Docs', '/docs'], ['GitHub', 'https://github.com/RitzwiK/ACRS-v2', true]]} />
           </div>
         </div>
         <div style={{ marginTop: 40, paddingTop: 20, borderTop: '1px solid var(--iron)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-          <span className="mono" style={{ fontSize: 11, color: 'var(--ash)' }}>© 2026 ACRS · SRMIST</span>
+          <span className="mono" style={{ fontSize: 11, color: 'var(--ash)' }}>
+  © 2026 ACRS · Built by{' '}
+  
+    <a href="https://www.linkedin.com/in/ritwikk03/"
+    target="_blank"
+    rel="noreferrer"
+    style={{ color: 'var(--silver)', transition: 'color .2s' }}
+    onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--red)')}
+    onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--silver)')}
+  >
+    Ritwik
+  </a>
+</span>
           <span className="mono" style={{ fontSize: 11, color: 'var(--ash)' }}>AST · CFG · DFG → GAT</span>
         </div>
       </div>

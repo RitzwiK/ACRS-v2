@@ -2,11 +2,14 @@ import React from 'react'
 
 /* ------------------------------------------------------------------
    LanguageMarquee — an infinite, seamless sliding bar of the languages
-   ACRS supports. The track holds two identical copies of the list and
-   translates by exactly -50% in a linear loop, so the seam is invisible
-   and the motion never jumps. Because the animation is a percentage of
-   the track's own width (not the viewport), it stays smooth and
-   continuous at any zoom level or screen size.
+   ACRS supports.
+
+   To stay full-bleed and seamless at ANY zoom / screen width, the track
+   renders FOUR identical copies of the list and animates by exactly the
+   width of one copy (-25%). Four copies guarantee the track is always
+   wider than the viewport (even zoomed far out on an ultrawide display),
+   so there is never a visible end, and translating by one-copy-width
+   makes the wrap point invisible.
    ------------------------------------------------------------------ */
 
 const LANGS = [
@@ -14,7 +17,8 @@ const LANGS = [
   'HTML', 'CSS', 'JSON',
 ]
 
-// each language gets a short mono tag glyph
+const COPIES = 4
+
 function Item({ name }) {
   return (
     <div style={{
@@ -36,12 +40,14 @@ function Item({ name }) {
 }
 
 export default function LanguageMarquee() {
-  // duplicate the list so the -50% translate produces a seamless wrap
-  const row = [...LANGS, ...LANGS]
+  // one "set" = the full language list; render COPIES sets back to back
+  const set = LANGS
   return (
     <div className="lm-wrap" aria-hidden="true">
       <div className="lm-track">
-        {row.map((l, i) => <Item key={i} name={l} />)}
+        {Array.from({ length: COPIES }).flatMap((_, c) =>
+          set.map((l, i) => <Item key={`${c}-${i}`} name={l} />)
+        )}
       </div>
       <style>{`
         .lm-wrap {
@@ -51,21 +57,22 @@ export default function LanguageMarquee() {
           padding: 18px 0;
           border-top: 1px solid var(--iron);
           border-bottom: 1px solid var(--iron);
-          /* fade the edges so items dissolve in/out instead of hard-cutting */
-          -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-          mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
         }
         .lm-track {
           display: inline-flex;
           align-items: center;
           width: max-content;
-          animation: lm-scroll 38s linear infinite;
+          animation: lm-scroll 26s linear infinite;
           will-change: transform;
         }
         .lm-wrap:hover .lm-track { animation-play-state: paused; }
+        /* there are ${COPIES} copies, so one copy = ${100 / COPIES}% of the track.
+           translating by that amount loops seamlessly. */
         @keyframes lm-scroll {
           from { transform: translateX(0); }
-          to   { transform: translateX(-50%); }
+          to   { transform: translateX(-${100 / COPIES}%); }
         }
         @media (prefers-reduced-motion: reduce) {
           .lm-track { animation: none; }
