@@ -1,5 +1,6 @@
 import os
 import sys
+import gc
 import json
 import shutil
 import tempfile
@@ -178,7 +179,7 @@ def analyze_repository():
                 ext = Path(file_path).suffix.lower()
                 language = LANG_MAP.get(ext, 'Unknown')
 
-                result = analyze_source(source_code, rel_path, language, rel_path)
+                result = analyze_source(source_code, rel_path, language, rel_path, lightweight=True)
                 if not result:
                     continue
 
@@ -188,6 +189,11 @@ def analyze_repository():
                     ai_likelihoods.append(ai['ai_likelihood'])
 
                 _accumulate(analysis_results, result, all_confidences)
+                # keep peak memory flat on free-tier instances: drop the source
+                # text reference and periodically force a collection
+                del source_code
+                if len(analysis_results['files']) % 10 == 0:
+                    gc.collect()
 
             except Exception as e:
                 analysis_results['files'].append({
@@ -197,7 +203,14 @@ def analyze_repository():
 
         _finalize(analysis_results, all_confidences, ai_likelihoods)
         analysis_results['report'] = report_generator.generate(analysis_results)
+        # Cap the in-memory cache so a long-running free-tier instance can't grow
+        # until it is OOM-killed. Keep only the few most recent scans.
         RESULTS_CACHE[scan_id] = analysis_results
+        MAX_CACHED_SCANS = 8
+        if len(RESULTS_CACHE) > MAX_CACHED_SCANS:
+            for old_key in list(RESULTS_CACHE.keys())[:-MAX_CACHED_SCANS]:
+                RESULTS_CACHE.pop(old_key, None)
+        gc.collect()
 
         shutil.rmtree(repo_path, ignore_errors=True)
         return jsonify(analysis_results)
@@ -210,7 +223,7 @@ def analyze_repository():
 # ---------------------------------------------------------------------------
 # Core single-file analysis (shared by snippet + repo paths)
 # ---------------------------------------------------------------------------
-def analyze_source(source_code, rel_path, language, file_key):
+def analyze_source(source_code, rel_path, language, file_key, lightweight=False):
     ext = '.' + _ext_for(language)
     parser = PARSERS.get(ext, PARSERS.get(Path(rel_path).suffix.lower()))
     if not parser:
@@ -243,9 +256,28 @@ def analyze_source(source_code, rel_path, language, file_key):
             })
 
     import_info = detect_imports(source_code, language)
-    graph_viz = export_graph_for_viz(program_graph, max_nodes=200)
 
-    return {
+    graph_info = {
+        'num_nodes': program_graph['num_nodes'],
+        'num_edges': program_graph['num_edges'],
+        'ast_edges': program_graph.get('ast_edge_count', 0),
+        'cfg_edges': program_graph.get('cfg_edge_count', 0),
+        'dfg_edges': program_graph.get('dfg_edge_count', 0),
+        'node_types': program_graph.get('node_type_counts', {}),
+    }
+
+    # In lightweight (repo-scan) mode we keep memory low: only retain the heavy
+    # graph-visualisation payload and source preview for files that actually have
+    # findings — clean files don't need a stored graph in the repo overview.
+    if lightweight and not issues:
+        graph_viz = None
+        source_preview = ''
+    else:
+        graph_viz = export_graph_for_viz(program_graph, max_nodes=200)
+        preview_cap = 8000 if lightweight else 20000
+        source_preview = source_code if len(source_code) < preview_cap else source_code[:preview_cap]
+
+    result = {
         'path': rel_path,
         'language': language,
         'lines': source_code.count('\n') + 1,
@@ -253,17 +285,14 @@ def analyze_source(source_code, rel_path, language, file_key):
         'issues': issues,
         'issue_count': len(issues),
         'imports': import_info,
-        'graph_info': {
-            'num_nodes': program_graph['num_nodes'],
-            'num_edges': program_graph['num_edges'],
-            'ast_edges': program_graph.get('ast_edge_count', 0),
-            'cfg_edges': program_graph.get('cfg_edge_count', 0),
-            'dfg_edges': program_graph.get('dfg_edge_count', 0),
-            'node_types': program_graph.get('node_type_counts', {}),
-        },
+        'graph_info': graph_info,
         'graph_viz': graph_viz,
-        'source_preview': source_code if len(source_code) < 20000 else source_code[:20000],
+        'source_preview': source_preview,
     }
+
+    # release large intermediates promptly so peak memory stays low across a repo
+    del ast_data, program_graph, encoded_features, predictions
+    return result
 
 
 def _ext_for(language):
