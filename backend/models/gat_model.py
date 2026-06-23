@@ -209,7 +209,8 @@ class GATDefectDetector:
         MAX_MP_NODES = 1200
         h = node_embeddings.copy()
         all_attention = {}
-        if len(node_ids) <= MAX_MP_NODES:
+        ran_message_passing = len(node_ids) <= MAX_MP_NODES
+        if ran_message_passing:
             for i, layer in enumerate(self.layers):
                 is_last = (i == self.num_layers - 1)
                 h, attn = layer.forward(h, typed_adjacency, node_id_to_idx, is_last=is_last)
@@ -219,15 +220,20 @@ class GATDefectDetector:
         heuristic_issues = self._run_heuristic_analysis(program_graph, node_id_to_idx)
         heuristic_issues = self._deduplicate(heuristic_issues)
 
-        # node-level classifier head produces a calibrated confidence per issue
-        node_logits = h @ self.node_W1.T + self.node_b1
-        node_logits = np.maximum(node_logits, 0)
-        node_logits = node_logits @ self.node_W2.T + self.node_b2
+        # node-level classifier head produces a calibrated confidence per issue.
+        # It consumes the post-message-passing embeddings (width = hidden_dim), so
+        # it only runs when message-passing ran. On huge graphs where we skipped
+        # message-passing, the heuristic base_confidence is used directly.
+        node_logits = None
+        if ran_message_passing and h.shape[1] == self.node_W1.shape[1]:
+            node_logits = h @ self.node_W1.T + self.node_b1
+            node_logits = np.maximum(node_logits, 0)
+            node_logits = node_logits @ self.node_W2.T + self.node_b2
 
         predictions = []
         for issue in heuristic_issues:
             node_idx = issue.get('node_idx')
-            if node_idx is not None and node_idx < len(node_logits):
+            if node_logits is not None and node_idx is not None and node_idx < len(node_logits):
                 logit = node_logits[node_idx].copy()
                 cat_idx = self.CATEGORIES.index(issue['category']) if issue['category'] in self.CATEGORIES else 0
                 logit[cat_idx] += 2.0
