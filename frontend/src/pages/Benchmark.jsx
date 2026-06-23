@@ -30,8 +30,7 @@ export default function Benchmark() {
             strictly at the level of individual findings, and computed live, in front of you.
           </p>
           <p style={{ fontSize: 13.5, color: 'var(--pewter)', maxWidth: 580, marginBottom: 28 }}>
-            No cherry-picking: you'll see precision, recall, F1, the confusion matrix, and a full
-            per-sample breakdown of exactly what was expected versus detected.
+            See every prediction alongside precision, recall, F1, and the confusion matrix.
           </p>
           <button className="btn btn-primary" onClick={run} disabled={loading}>
             {loading ? <Spinner size={14} /> : <Play size={14} />} {loading ? 'Running…' : 'Run benchmark'}
